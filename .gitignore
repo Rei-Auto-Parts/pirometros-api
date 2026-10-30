@@ -28,6 +28,8 @@ htmlcov/
 
 # Claude Code (preferencias locais)
 .claude/settings.local.json
+.claude/.bu-state.json
+**/.claude/.bu-state.json
 .claude-flow/
 .swarm/
 

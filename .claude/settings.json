@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": ["Bash(make *)", "Bash(docker compose *)"],
+    "deny": ["Read(./.env)", "Read(./**/*.pem)", "Read(./**/secrets/**)"]
+  },
+  "extraKnownMarketplaces": {
+    "byt3un1on": {
+      "source": { "source": "github", "repo": "byt3un1on/shared-claude-plugin" }
+    }
+  },
+  "enabledPlugins": {
+    "bu@byt3un1on": true,
+    "bu-python@byt3un1on": true
+  }
+}
