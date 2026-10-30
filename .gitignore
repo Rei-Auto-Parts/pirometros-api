@@ -1,0 +1,37 @@
+# Gerados pelo plugin Byte Union: o metodo da organizacao nao vai para o repositorio do projeto
+/.specify/memory/constitution.md
+/CLAUDE.md
+
+# Segredos e configuracao local
+.env
+.env.*
+!.env.example
+*.pem
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Ferramentas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Claude Code (preferencias locais)
+.claude/settings.local.json
+.claude-flow/
+.swarm/
+
+# Editor e SO
+.idea/
+.vscode/
+.DS_Store

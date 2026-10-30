@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sobe a imagem e os servicos de apoio
+        run: make infra
+      - name: Instala as dependencias
+        run: make install
+      - name: Inicializa a infraestrutura
+        run: make init
+      - name: Valida (fmt, lint, test, cover, it, bdd)
+        run: make validate
+      - name: Derruba os containers
+        if: always()
+        run: make down

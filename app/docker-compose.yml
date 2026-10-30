@@ -1,0 +1,49 @@
+# O nome do projeto vem daqui, nunca do diretorio: como o compose vive em `app/` em
+# todo repositorio da organizacao, sem esta linha todos colidem no projeto `app`.
+name: ${PROJECT_NAME:-pirometros-api}
+
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    image: ${PROJECT_NAME:-pirometros-api}-dev
+    container_name: ${PROJECT_NAME:-pirometros-api}-dev
+    networks: [interna]
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      INIT_WAIT_FOR: postgres:5432
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql+psycopg://pirometros:${POSTGRES_PASSWORD:-pirometros_dev}@postgres:5432/pirometros
+    command: ["sleep", "infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Banco descartavel, so para desenvolvimento e testes. Nao ha `public.receiver_data` aqui:
+  # essa tabela existe apenas no Postgres de producao, escrita pelo sincronizador.
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${PROJECT_NAME:-pirometros-api}-postgres
+    networks: [interna]
+    environment:
+      POSTGRES_DB: pirometros
+      POSTGRES_USER: pirometros
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pirometros_dev}
+    expose:
+      - "5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pirometros -d pirometros"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+networks:
+  interna:
+    name: ${PROJECT_NAME:-pirometros-api}-interna
