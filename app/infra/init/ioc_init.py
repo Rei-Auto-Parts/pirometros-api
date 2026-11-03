@@ -1,6 +1,12 @@
 from adapters.controllers.health_controller import HealthController
+from adapters.controllers.pyrometers_controller import PyrometersController
+from adapters.controllers.readings_controller import ReadingsController
 from adapters.repositories.database_health_repository import DatabaseHealthRepository
+from adapters.repositories.reading_repository import ReadingRepository
 from core.application.check_health_use_case import CheckHealthUseCase
+from core.application.get_readings_series_use_case import GetReadingsSeriesUseCase
+from core.application.list_pyrometers_use_case import ListPyrometersUseCase
+from core.application.list_readings_use_case import ListReadingsUseCase
 from infra.api.api_entry import ApiEntry
 from infra.api.api_router import build_api_router
 from infra.api.api_server import create_app
@@ -16,9 +22,18 @@ def build_api_entry() -> ApiEntry:
     configure_logging(settings.log_level)
     database_url = settings.database_url.get_secret_value()
 
-    repository = DatabaseHealthRepository(build_engine(database_url), get_logger("database"))
-    health_controller = HealthController(CheckHealthUseCase(repository))
-    app = create_app(build_api_router(health_controller))
+    engine = build_engine(database_url)
+    health_controller = HealthController(
+        CheckHealthUseCase(DatabaseHealthRepository(engine, get_logger("database")))
+    )
+    reading_repository = ReadingRepository(engine)
+    readings_controller = ReadingsController(
+        ListReadingsUseCase(reading_repository), GetReadingsSeriesUseCase(reading_repository)
+    )
+    pyrometers_controller = PyrometersController(ListPyrometersUseCase(reading_repository))
+    app = create_app(
+        build_api_router(health_controller, readings_controller, pyrometers_controller)
+    )
 
     def before_start() -> None:
         if settings.run_migrations_on_start:

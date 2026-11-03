@@ -1,0 +1,4 @@
+{
+  "active": "specs/001-painel-de-temperaturas-somente-leitura-na",
+  "title": "Painel de temperaturas (somente leitura) na pirometros-api. Escopo: (1) leituras de public.receiver_data com data efetiva e data_status (valida/estimada) tratando ruído de data sem alterar o dado bruto, ordenando por id por pirômetro; (2) série de temperaturas por pirômetro num período; (3) saúde dos pirômetros (última leitura, bateria, junta fria). Fora do escopo: números do turno, mapa de códigos, pontos de medição, faixas, classificação, correção manual, autenticação. Datas sem conversão de fuso."
+}

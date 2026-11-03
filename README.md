@@ -34,7 +34,21 @@ make down       # derruba os containers
 - Saúde: `GET http://localhost:8000/api/health`
 - Documentação OpenAPI: `http://localhost:8000/api/docs`
 - Outros alvos: `make help`. Os testes `it` e `bdd` usam o Postgres do compose, que não tem
-  `public.receiver_data`.
+  `public.receiver_data`: a fixture de `app/tests/support/` cria uma tabela igual só nesse banco
+  descartável.
+
+## Endpoints
+
+Tudo é leitura de `public.receiver_data`. As datas são horário local, sem fuso (`2026-10-29T11:00:30`).
+`start` e `end` são obrigatórios, inclusivos e não aceitam fuso.
+
+| Rota | O que devolve |
+|---|---|
+| `GET /api/readings?start=&end=&dev_id=&page=&page_size=` | leituras do período, da mais recente para a mais antiga pela data da medição; `dev_id` (serial) é repetível; página padrão 50, máximo 500 |
+| `GET /api/readings/series?start=&end=&dev_id=` | pontos de temperatura agrupados por pirômetro, em ordem de data; período máximo de 31 dias |
+| `GET /api/pyrometers` | pirômetros existentes, com serial e nome atual |
+
+Erros: `422` para parâmetro inválido ou período da série acima de 31 dias; `503` se o banco estiver fora.
 
 ## Variáveis de ambiente
 
