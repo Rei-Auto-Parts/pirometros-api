@@ -38,3 +38,11 @@ class IReadingRepository(Protocol):
     def find_pyrometers(self) -> list[PyrometerDto]:
         """Um item por pirometro, com o nome da medicao mais recente."""
         ...
+
+    def find_summaries(self) -> list[ReadingDto]:
+        """Por pirometro, a medicao mais recente que tem temperatura."""
+        ...
+
+    def pyrometer_exists(self, pyrometer_id: str) -> bool:
+        """Se o serial aparece em alguma medicao gravada."""
+        ...

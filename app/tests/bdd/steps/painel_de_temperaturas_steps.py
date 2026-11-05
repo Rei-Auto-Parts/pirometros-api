@@ -222,9 +222,10 @@ def period_too_long(context: Any) -> None:
 
 @then("recebo os dois, cada um com serial e nome")
 def both_pyrometers_with_serial_and_name(context: Any) -> None:
-    assert context.response.json() == [
-        {"id": DEVICES["PI-14"], "name": "PI-14"},
-        {"id": DEVICES["PI-12"], "name": "PI-12"},
+    items = context.response.json()
+    assert [(item["id"], item["name"]) for item in items] == [
+        (DEVICES["PI-14"], "PI-14"),
+        (DEVICES["PI-12"], "PI-12"),
     ]
 
 

@@ -13,3 +13,4 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "INFO"
     run_migrations_on_start: bool = True
+    local_timezone: str = "America/Sao_Paulo"

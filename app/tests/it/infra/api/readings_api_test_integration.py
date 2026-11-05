@@ -53,7 +53,7 @@ def test_should_serve_pyrometers_when_readings_exist(clean_readings: Engine) -> 
     response = client.get("/api/pyrometers")
 
     # Assert
-    assert response.json() == [{"id": PI_12, "name": "PI-12"}]
+    assert [(item["id"], item["name"]) for item in response.json()] == [(PI_12, "PI-12")]
 
 
 def test_should_respond_422_when_series_period_exceeds_31_days(clean_readings: Engine) -> None:
@@ -82,3 +82,22 @@ def test_should_respond_503_when_database_is_down(clean_readings: Engine) -> Non
     # Assert
     assert response.status_code == 503
     assert response.json() == {"detail": "banco de dados indisponivel"}
+
+
+def test_should_not_serve_readings_without_temperature_when_listing_and_in_the_series(
+    clean_readings: Engine,
+) -> None:
+    # Arrange
+    insert_reading(clean_readings, 1, datetime(2026, 10, 29, 10, 0, 0), temperature=1500)
+    insert_reading(clean_readings, 2, datetime(2026, 10, 29, 11, 0, 0), temperature=None)
+    insert_reading(clean_readings, 3, datetime(2026, 10, 29, 12, 0, 0), temperature=1520)
+    client = build_api_client(clean_readings)
+
+    # Act
+    listed = client.get("/api/readings", params=PERIOD).json()
+    series = client.get("/api/readings/series", params=PERIOD).json()
+
+    # Assert
+    assert listed["total"] == 2
+    assert [item["id"] for item in listed["items"]] == [3, 1]
+    assert [point["id"] for point in series[0]["points"]] == [1, 3]

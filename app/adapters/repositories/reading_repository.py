@@ -13,7 +13,8 @@ COLUMNS = (
     "id, gtw_id, gtw_name, dev_id, dev_name, reg_date, reg_thermocouple, reg_unit, reg_tcj, "
     "reg_read_delay, reg_place, reg_battery, reg_temperature, reg_detect_time"
 )
-PERIOD_FILTER = "reg_date BETWEEN :start AND :end"
+# Leitura sem temperatura nunca sai da API: total e paginacao so contam as que tem.
+PERIOD_FILTER = "reg_date BETWEEN :start AND :end AND reg_temperature IS NOT NULL"
 PYROMETER_FILTER = " AND dev_id = ANY(:ids)"
 
 
@@ -67,6 +68,19 @@ class ReadingRepository:
     ) -> Sequence[Mapping[str, Any]]:
         with self._engine.connect() as connection:
             return [dict(row) for row in connection.execute(statement, params).mappings().all()]
+
+    def find_summaries(self) -> list[ReadingDto]:
+        statement = text(
+            f"SELECT DISTINCT ON (dev_id) {COLUMNS} FROM public.receiver_data "
+            "WHERE dev_id IS NOT NULL AND reg_date IS NOT NULL AND reg_temperature IS NOT NULL "
+            "ORDER BY dev_id, reg_date DESC, id DESC"
+        )
+        return [self._to_reading(row) for row in self._fetch(statement, {})]
+
+    def pyrometer_exists(self, pyrometer_id: str) -> bool:
+        statement = text("SELECT EXISTS (SELECT 1 FROM public.receiver_data WHERE dev_id = :id)")
+        with self._engine.connect() as connection:
+            return bool(connection.execute(statement, {"id": pyrometer_id}).scalar_one())
 
     @staticmethod
     def _filter(

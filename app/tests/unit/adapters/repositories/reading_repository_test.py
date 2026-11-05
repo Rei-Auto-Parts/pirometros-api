@@ -188,7 +188,63 @@ def test_should_map_rows_to_pyrometers_when_finding_pyrometers(mocker: MockerFix
         lambda repository: repository.find_readings(START, END, [], limit=1, offset=0),
         lambda repository: repository.count_readings(START, END, []),
         lambda repository: repository.find_series(START, END, []),
+    ],
+)
+def test_should_exclude_readings_without_temperature_when_filtering_by_period(
+    mocker: MockerFixture, call: Callable[[Any], Any]
+) -> None:
+    # Arrange
+    repository, connection = build_repository(mocker, [])
+
+    # Act
+    call(repository)
+
+    # Assert
+    assert "reg_temperature IS NOT NULL" in str(connection.execute.call_args.args[0])
+
+
+def test_should_return_latest_reading_with_temperature_when_finding_summaries(
+    mocker: MockerFixture,
+) -> None:
+    # Arrange
+    repository, connection = build_repository(mocker, [build_row()])
+
+    # Act
+    result = repository.find_summaries()
+
+    # Assert
+    statement = str(connection.execute.call_args.args[0])
+    assert "DISTINCT ON (dev_id)" in statement
+    assert "reg_temperature IS NOT NULL" in statement
+    assert "ORDER BY dev_id, reg_date DESC, id DESC" in statement
+    assert result[0].temperature == 1548
+
+
+@pytest.mark.parametrize("found", [True, False])
+def test_should_return_whether_serial_exists_when_checking_pyrometer(
+    mocker: MockerFixture, found: bool
+) -> None:
+    # Arrange
+    repository, connection = build_repository(mocker, [])
+    connection.execute.return_value.scalar_one.return_value = found
+
+    # Act
+    result = repository.pyrometer_exists("C24C.F90D.0000")
+
+    # Assert
+    assert result is found
+    assert connection.execute.call_args.args[1] == {"id": "C24C.F90D.0000"}
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda repository: repository.find_readings(START, END, [], limit=1, offset=0),
+        lambda repository: repository.count_readings(START, END, []),
+        lambda repository: repository.find_series(START, END, []),
         lambda repository: repository.find_pyrometers(),
+        lambda repository: repository.find_summaries(),
+        lambda repository: repository.pyrometer_exists("C24C.F90D.0000"),
     ],
 )
 def test_should_only_select_when_reading_from_receiver_data(

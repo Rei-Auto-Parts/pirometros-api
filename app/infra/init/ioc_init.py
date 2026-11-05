@@ -2,15 +2,19 @@ from adapters.controllers.health_controller import HealthController
 from adapters.controllers.pyrometers_controller import PyrometersController
 from adapters.controllers.readings_controller import ReadingsController
 from adapters.repositories.database_health_repository import DatabaseHealthRepository
+from adapters.repositories.pyrometer_profile_repository import PyrometerProfileRepository
 from adapters.repositories.reading_repository import ReadingRepository
 from core.application.check_health_use_case import CheckHealthUseCase
 from core.application.get_readings_series_use_case import GetReadingsSeriesUseCase
+from core.application.list_pyrometer_summaries_use_case import ListPyrometerSummariesUseCase
 from core.application.list_pyrometers_use_case import ListPyrometersUseCase
 from core.application.list_readings_use_case import ListReadingsUseCase
+from core.application.save_pyrometer_profile_use_case import SavePyrometerProfileUseCase
 from infra.api.api_entry import ApiEntry
 from infra.api.api_router import build_api_router
 from infra.api.api_server import create_app
 from infra.init.migration_init import run_migrations
+from infra.tools.clock_tool import ClockTool
 from infra.tools.config_tool import Settings
 from infra.tools.database_tool import build_engine
 from infra.tools.logger_tool import configure_logging, get_logger
@@ -30,7 +34,12 @@ def build_api_entry() -> ApiEntry:
     readings_controller = ReadingsController(
         ListReadingsUseCase(reading_repository), GetReadingsSeriesUseCase(reading_repository)
     )
-    pyrometers_controller = PyrometersController(ListPyrometersUseCase(reading_repository))
+    profile_repository = PyrometerProfileRepository(engine)
+    pyrometers_controller = PyrometersController(
+        ListPyrometersUseCase(reading_repository, profile_repository),
+        ListPyrometerSummariesUseCase(reading_repository, ClockTool(settings.local_timezone)),
+        SavePyrometerProfileUseCase(reading_repository, profile_repository),
+    )
     app = create_app(
         build_api_router(health_controller, readings_controller, pyrometers_controller)
     )
